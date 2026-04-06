@@ -1,45 +1,25 @@
 package cn.reddragon.eportal.nt.ui.screen
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Numbers
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedSecureTextField
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,7 +44,7 @@ fun AccountScreen(
     var editingAccount by remember { mutableStateOf<AccountItem?>(null) }
     var pendingDeleteStudentId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
-
+    
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -106,13 +86,13 @@ fun AccountScreen(
                 }
             }
         }
-
+        
         FloatingActionButton(
             onClick = { showAddDialog = true },
             shape = CircleShape,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                //.size(48.dp)
+            //.size(48.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
@@ -121,7 +101,7 @@ fun AccountScreen(
             )
         }
     }
-
+    
     if (showAddDialog) {
         ManageAccountDialog(
             title = "添加账号",
@@ -144,7 +124,7 @@ fun AccountScreen(
             onDismiss = { showAddDialog = false }
         )
     }
-
+    
     editingAccount?.let { account ->
         ManageAccountDialog(
             title = "编辑账号",
@@ -154,7 +134,7 @@ fun AccountScreen(
             onConfirm = { username, studentId, password ->
                 val normalizedStudentId = studentId.trim()
                 val finalUsername = username.trim().ifBlank { normalizedStudentId }
-
+                
                 val duplicateExists = accounts.any {
                     it.studentId == normalizedStudentId && it.studentId != account.studentId
                 }
@@ -162,7 +142,7 @@ fun AccountScreen(
                     Toast.makeText(context, "账号已存在", Toast.LENGTH_SHORT).show()
                     return@ManageAccountDialog
                 }
-
+                
                 onEditAccount(
                     account.studentId,
                     AccountItem(
@@ -180,7 +160,7 @@ fun AccountScreen(
             onDismiss = { editingAccount = null }
         )
     }
-
+    
     pendingDeleteStudentId?.let { studentId ->
         AlertDialog(
             onDismissRequest = { pendingDeleteStudentId = null },
@@ -215,7 +195,7 @@ private fun AccountCard(
 ) {
     val containerColor by animateColorAsState(
         targetValue = if (selected) {
-            MaterialTheme.colorScheme.primaryContainer
+            MaterialTheme.colorScheme.secondaryContainer
         } else {
             MaterialTheme.colorScheme.surfaceContainer
         },
@@ -227,7 +207,7 @@ private fun AccountCard(
         animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
         label = "account_card_scale"
     )
-
+    
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -241,19 +221,40 @@ private fun AccountCard(
         shape = MaterialTheme.shapes.extraLarge,
         elevation = CardDefaults.cardElevation(defaultElevation = if (selected) 5.dp else 2.dp)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(imageVector = Icons.Default.AccountCircle, contentDescription = null)
-                Text(text = account.username)
+            Column(
+                modifier = Modifier
+                //.fillMaxWidth()
+                ,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(imageVector = Icons.Default.AccountCircle, contentDescription = null)
+                    Text(text = account.username)
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(imageVector = Icons.Default.Numbers, null)
+                    Text(text = account.studentId)
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(imageVector = Icons.Default.Numbers, null)
-                Text(text = account.studentId)
+            
+            AnimatedContent(selected) {
+                if (it) {
+                    Icon(
+                        modifier = Modifier
+                            .scale(1.2F)
+                            .padding(8.dp, 0.dp),
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        //tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
     }
@@ -272,7 +273,7 @@ private fun ManageAccountDialog(
     var username by remember(initialUsername) { mutableStateOf(initialUsername) }
     var studentId by remember(initialStudentId) { mutableStateOf(initialStudentId) }
     val passwordState = rememberTextFieldState(initialText = initialPassword)
-
+    
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },

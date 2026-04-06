@@ -2,7 +2,6 @@ package cn.reddragon.eportal.nt.ui.screen
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -154,11 +153,6 @@ private fun OnlineStatusCard(
         animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
         label = "status_card_content"
     )
-    val iconScale by animateFloatAsState(
-        targetValue = if (isOnline) 1f else 0.92f,
-        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-        label = "status_icon_scale"
-    )
     
     Card(
         modifier = Modifier
@@ -185,7 +179,9 @@ private fun OnlineStatusCard(
             AnimatedContent(targetState = isSyncing) { syncing ->
                 if (syncing) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier
+                            .size(48.dp)
+                            .scale(0.85F),
                         color = contentColor,
                         //trackColor = MaterialTheme.colorScheme.surfaceVariant
                     )
@@ -197,7 +193,6 @@ private fun OnlineStatusCard(
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .scale(iconScale)
                             )
                         } else {
                             Icon(
@@ -205,7 +200,6 @@ private fun OnlineStatusCard(
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .scale(iconScale)
                             )
                         }
                     }
@@ -349,7 +343,6 @@ private fun ErrorCard(
     }
 }
 
-@Suppress("unused")
 @Composable
 fun InfoItem(icon: ImageVector, label: String, value: String, onClick: (() -> Unit)? = null) {
     Row(
