@@ -7,11 +7,17 @@ import cn.reddragon.eportal.nt.auth.Authenticator
 import cn.reddragon.eportal.nt.auth.ServiceType
 
 class CampusAuthRepository(
-    private val authenticator: Authenticator = Authenticator
+    private val authenticator: Authenticator
 ) {
     private var online = false
     private var userIndex: String? = null
     private var userStatus: UserStatus? = null
+    
+    companion object {
+        val INSTANCE = CampusAuthRepository()
+    }
+    
+    private constructor(): this(Authenticator)
     
     suspend fun login(account: AccountItem, serviceType: ServiceType): AuthSyncSnapshot {
         if (online) {

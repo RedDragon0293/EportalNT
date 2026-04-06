@@ -1,12 +1,7 @@
 package cn.reddragon.eportal.nt.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -21,6 +16,7 @@ private val Context.dataStore by preferencesDataStore(name = DATASTORE_NAME)
 data class StoredAccountState(
     val accounts: List<AccountItem>,
     val selectedAccountId: String?,
+    val selectedServiceTypeName: String,
     val pollingIntervalSeconds: Int,
     val autoLoginWhenOffline: Boolean,
     val autoLoginStart: Boolean,
@@ -38,12 +34,14 @@ class AccountPreferencesStore(private val context: Context) {
         .map { preferences ->
             val accounts = decodeAccounts(preferences[KEY_ACCOUNTS_JSON])
             val selectedAccountId = preferences[KEY_SELECTED_ACCOUNT_ID]
+            val selectedServiceTypeName = preferences[KEY_SELECTED_SERVICE_TYPE_NAME] ?: DEFAULT_SELECTED_SERVICE_TYPE
             val pollingIntervalSeconds =
                 (preferences[KEY_POLLING_INTERVAL_SECONDS] ?: DEFAULT_POLLING_INTERVAL_SECONDS)
                     .coerceIn(MIN_POLLING_INTERVAL_SECONDS, MAX_POLLING_INTERVAL_SECONDS)
             StoredAccountState(
                 accounts = accounts,
                 selectedAccountId = selectedAccountId,
+                selectedServiceTypeName = selectedServiceTypeName,
                 pollingIntervalSeconds = pollingIntervalSeconds,
                 autoLoginWhenOffline = preferences[KEY_AUTO_LOGIN_WHEN_OFFLINE] ?: true,
                 autoLoginStart = preferences[KEY_AUTO_LOGIN_START] ?: true,
@@ -80,6 +78,12 @@ class AccountPreferencesStore(private val context: Context) {
         }
     }
     
+    suspend fun saveSelectedServiceTypeName(serviceTypeName: String) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_SELECTED_SERVICE_TYPE_NAME] = serviceTypeName
+        }
+    }
+    
     private fun decodeAccounts(raw: String?): List<AccountItem> {
         if (raw.isNullOrBlank()) return emptyList()
         return runCatching { json.decodeFromString(ListSerializer(AccountItem.serializer()), raw) }
@@ -95,10 +99,13 @@ class AccountPreferencesStore(private val context: Context) {
         private const val DEFAULT_POLLING_INTERVAL_SECONDS = 10
         const val MIN_POLLING_INTERVAL_SECONDS = 0
         const val MAX_POLLING_INTERVAL_SECONDS = 60
+        private const val DEFAULT_SELECTED_SERVICE_TYPE = "WAN"
         
         private val KEY_ACCOUNTS_JSON: Preferences.Key<String> = stringPreferencesKey("accounts_json")
         private val KEY_SELECTED_ACCOUNT_ID: Preferences.Key<String> =
             stringPreferencesKey("selected_account_id")
+        private val KEY_SELECTED_SERVICE_TYPE_NAME: Preferences.Key<String> =
+            stringPreferencesKey("selected_service_type_name")
         private val KEY_POLLING_INTERVAL_SECONDS: Preferences.Key<Int> =
             intPreferencesKey("polling_interval_seconds")
         private val KEY_AUTO_LOGIN_WHEN_OFFLINE: Preferences.Key<Boolean> =
@@ -107,4 +114,3 @@ class AccountPreferencesStore(private val context: Context) {
             booleanPreferencesKey("auto_login_start")
     }
 }
-

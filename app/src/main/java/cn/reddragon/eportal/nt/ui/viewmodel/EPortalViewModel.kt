@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 class EPortalViewModel(
-    private val repository: CampusAuthRepository = CampusAuthRepository()
+    private val repository: CampusAuthRepository = CampusAuthRepository.INSTANCE
 ) : ViewModel() {
     val tracker = UserStatusTracker(this)
     

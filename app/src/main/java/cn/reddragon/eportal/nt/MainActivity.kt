@@ -77,30 +77,32 @@ private fun CampusApp() {
     val coroutineScope = rememberCoroutineScope()
     val accountStore = remember(context) { AccountPreferencesStore(context) }
     val ePortalViewModel: EPortalViewModel = viewModel()
-    
+
     val storedState by accountStore.accountStateFlow.collectAsState(
         initial = StoredAccountState(
             accounts = emptyList(),
             selectedAccountId = null,
+            selectedServiceTypeName = ServiceType.entries.first().name,
             pollingIntervalSeconds = 10,
             autoLoginWhenOffline = true,
             autoLoginStart = true,
         )
     )
     val uiState by ePortalViewModel.uiState.collectAsState()
-    
+
     var selectedTab by rememberSaveable { mutableStateOf(AppTab.HOME.name) }
-    var selectedServiceTypeName by rememberSaveable { mutableStateOf(ServiceType.entries.first().name) }
-    val selectedServiceType = ServiceType.valueOf(selectedServiceTypeName)
-    
+    val selectedServiceType = ServiceType.entries.firstOrNull {
+        it.name == storedState.selectedServiceTypeName
+    } ?: ServiceType.WAN
+
     val accounts = storedState.accounts
     val selectedAccountId = storedState.selectedAccountId?.takeIf { targetId ->
         accounts.any { account -> account.studentId == targetId }
     } ?: accounts.firstOrNull()?.studentId
-    
+
     val currentTab = AppTab.valueOf(selectedTab)
     val selectedAccount = accounts.firstOrNull { account -> account.studentId == selectedAccountId }
-    
+
     // 启动时执行
     LaunchedEffect(Unit) {
         ePortalViewModel.updateUserStatus()
@@ -111,7 +113,7 @@ private fun CampusApp() {
             }
         }
     }
-    
+
     // 轮询交由 ViewModel 托管，Compose 仅同步配置。
     LaunchedEffect(storedState.pollingIntervalSeconds) {
         ePortalViewModel.tracker.startPolling(
@@ -122,7 +124,7 @@ private fun CampusApp() {
     LaunchedEffect(
         storedState.autoLoginWhenOffline,
         selectedAccount?.studentId,
-        selectedServiceTypeName
+        selectedServiceType.name
     ) {
         ePortalViewModel.updatePollingParam(
             autoLogin = storedState.autoLoginWhenOffline,
@@ -130,7 +132,7 @@ private fun CampusApp() {
             service = selectedServiceType
         )
     }
-    
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -184,7 +186,11 @@ private fun CampusApp() {
                         state = uiState,
                         selectedAccountDisplay = selectedAccount?.username ?: "未选择账号",
                         selectedServiceType = selectedServiceType,
-                        onServiceTypeChange = { selectedServiceTypeName = it.name },
+                        onServiceTypeChange = { serviceType ->
+                            coroutineScope.launch {
+                                accountStore.saveSelectedServiceTypeName(serviceType.name)
+                            }
+                        },
                         onStatusCardClick = {
                             if (uiState.isOnline) {
                                 ePortalViewModel.logout()
@@ -194,7 +200,7 @@ private fun CampusApp() {
                                     selectedServiceType,
                                 )
                             }
-                            
+
                         },
                         onRefresh = {
                             ePortalViewModel.manualUpdate()
@@ -202,7 +208,7 @@ private fun CampusApp() {
                         modifier = Modifier
                     )
                 }
-                
+
                 AppTab.ACCOUNT -> {
                     AccountScreen(
                         accounts = accounts,
@@ -241,7 +247,7 @@ private fun CampusApp() {
                             val updatedAccounts = accounts
                                 .filterNot { account -> account.studentId == oldStudentId }
                                 .filterNot { account -> account.studentId == editedAccount.studentId } + editedAccount
-                            
+
                             val updatedSelectedId = if (
                                 selectedAccountId == oldStudentId ||
                                 selectedAccountId == editedAccount.studentId ||
@@ -251,7 +257,7 @@ private fun CampusApp() {
                             } else {
                                 selectedAccountId
                             }
-                            
+
                             coroutineScope.launch {
                                 accountStore.saveAccountState(
                                     accounts = updatedAccounts,
@@ -262,7 +268,7 @@ private fun CampusApp() {
                         modifier = Modifier
                     )
                 }
-                
+
                 AppTab.SETTINGS -> {
                     SettingsScreen(
                         pollingIntervalSeconds = storedState.pollingIntervalSeconds,

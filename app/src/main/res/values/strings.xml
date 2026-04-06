@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">EportalNT</string>
+    <string name="qs_tile_label">校园网</string>
 </resources>
