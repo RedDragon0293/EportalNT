@@ -22,3 +22,6 @@
 ## 作者
 - GPT-5.3-Codex
 - RedDragon0293
+
+## 协议
+MIT LICENSE
