@@ -13,6 +13,12 @@
 - 自动登录：可选启动自动登录、离线自动登录
 - 信息展示：展示当前账号的认证状态、剩余时长、在线设备等信息
 
+## 截图
+<img src="./art/1.jpg" width="180"/>
+<img src="./art/2.jpg" width="180"/>
+<img src="./art/3.jpg" width="180"/>
+<img src="./art/4.jpg" width="180"/>
+
 ## 环境要求
 
 - Android Studio / IntelliJ IDEA
